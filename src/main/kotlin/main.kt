@@ -7,7 +7,7 @@ fun main() {
     wordsFile.writeText(
         """
         hello|привет|0
-        dog|собака|2
+        dog|собака|3
         cat|кошка|1
         thank you|спасибо|1
     """.trimIndent()
@@ -27,7 +27,34 @@ fun main() {
         )
     }
 
-    dictionary.forEach { println(it) }
+    showMenu(dictionary)
+}
+
+fun showMenu(dictionary: MutableList<Word>) {
+    println(
+        """
+        Меню:
+        1 - Учить слова
+        2 - Статистика
+        0 - Выход
+    """.trimIndent()
+    )
+    while (true) {
+        println("Введите цифру:")
+        when (readln()) {
+            "1" -> println("Скоро тут будут слова")
+            "2" -> showStatistics(dictionary)
+            "0" -> return
+            else -> println("Такого варианта не существует!")
+        }
+    }
+}
+
+fun showStatistics(dictionary: MutableList<Word>) {
+    val wordsLearned = dictionary.filter { it.correctAnswersCount >= 3 }.size
+    val wordsTotal = dictionary.size
+    val percentageRatio = (wordsLearned.toDouble() / wordsTotal * 100).toInt()
+    println("Выучено $wordsLearned из $wordsTotal слов | $percentageRatio%")
 }
 
 
