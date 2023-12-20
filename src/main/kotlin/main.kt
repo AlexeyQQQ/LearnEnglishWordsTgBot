@@ -31,21 +31,48 @@ fun main() {
 }
 
 fun showMenu(dictionary: MutableList<Word>) {
-    println(
-        """
-        Меню:
-        1 - Учить слова
-        2 - Статистика
-        0 - Выход
-    """.trimIndent()
-    )
     while (true) {
-        println("Введите цифру:")
+        println(
+            """
+            Меню:
+            1 - Учить слова
+            2 - Статистика
+            0 - Выход
+            Введите цифру:
+        """.trimIndent()
+        )
         when (readln()) {
-            "1" -> println("Скоро тут будут слова")
+            "1" -> learningWords(dictionary)
             "2" -> showStatistics(dictionary)
             "0" -> return
             else -> println("Такого варианта не существует!")
+        }
+    }
+}
+
+fun learningWords(dictionary: MutableList<Word>) {
+    while (true) {
+        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < 3 }
+        if (listOfUnlearnedWords.isEmpty()) {
+            println("Слов для изучения больше нет, вы всё выучили!")
+            return
+        }
+
+        val shuffledListWords = listOfUnlearnedWords.shuffled().take(4)
+        val learnWord = shuffledListWords.random()
+
+        println("Слово для изучения: ${learnWord.original}\nВведите правильный перевод (цифрой) или 0 для выхода в меню:")
+        for (i in shuffledListWords.indices) {
+            println("${i + 1} - ${shuffledListWords[i].translation}")
+        }
+
+        val userAnswer = readln().toInt()
+        if (userAnswer == 0) {
+            return
+        } else if (userAnswer - 1 == shuffledListWords.indexOf(learnWord)) {
+            println("Правильно!")
+        } else {
+            println("Вы ошиблись!")
         }
     }
 }
@@ -63,3 +90,17 @@ data class Word(
     val translation: String,
     val correctAnswersCount: Int = 0,
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
