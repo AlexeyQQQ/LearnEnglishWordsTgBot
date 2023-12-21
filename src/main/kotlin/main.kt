@@ -52,17 +52,18 @@ fun learningWords(dictionary: List<Word>) {
             return
         }
 
-        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < ANSWERS_TO_STUDY }.toMutableList()
+        var listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < ANSWERS_TO_STUDY }
         if (listOfUnlearnedWords.isEmpty()) {
             println("Слов для изучения больше нет, вы всё выучили!")
             return
         }
 
         if (listOfUnlearnedWords.size < NUMBER_POSSIBLE_ANSWERS) {
-            val listOfLearnedWords = dictionary.filter { it.correctAnswersCount >= ANSWERS_TO_STUDY }.shuffled()
-            for (i in 1..NUMBER_POSSIBLE_ANSWERS - listOfUnlearnedWords.size) {
-                listOfUnlearnedWords.add(listOfLearnedWords[i - 1])
-            }
+            val listOfLearnedWords = dictionary
+                .filter { it.correctAnswersCount >= ANSWERS_TO_STUDY }
+                .shuffled()
+                .take(NUMBER_POSSIBLE_ANSWERS - listOfUnlearnedWords.size)
+            listOfUnlearnedWords = listOfUnlearnedWords + listOfLearnedWords
         }
 
         val shuffledListWords = listOfUnlearnedWords.shuffled().take(NUMBER_POSSIBLE_ANSWERS)
