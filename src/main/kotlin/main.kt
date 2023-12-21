@@ -25,7 +25,7 @@ fun main() {
     showMenu(dictionary)
 }
 
-fun showMenu(dictionary: MutableList<Word>) {
+fun showMenu(dictionary: List<Word>) {
     while (true) {
         println(
             """
@@ -45,7 +45,7 @@ fun showMenu(dictionary: MutableList<Word>) {
     }
 }
 
-fun learningWords(dictionary: MutableList<Word>) {
+fun learningWords(dictionary: List<Word>) {
     while (true) {
         if (dictionary.size < NUMBER_POSSIBLE_ANSWERS) {
             println("В вашем словаре слишком мало слов, добавьте хотя бы $NUMBER_POSSIBLE_ANSWERS!")
@@ -88,7 +88,7 @@ fun learningWords(dictionary: MutableList<Word>) {
     }
 }
 
-fun showStatistics(dictionary: MutableList<Word>) {
+fun showStatistics(dictionary: List<Word>) {
     val wordsLearned = dictionary.filter { it.correctAnswersCount >= ANSWERS_TO_STUDY }.size
     val wordsTotal = dictionary.size
     val percentageRatio = (wordsLearned.toDouble() / wordsTotal * 100).toInt()
@@ -105,8 +105,8 @@ fun createDictionaryFile(wordsFile: File) {
         text|текст|3
         news|новость|3
         word|слово|3
-        letter|письмо|3
-        message|сообщение|3
+        letter|письмо|0
+        message|сообщение|0
         note|заметка|0
     """.trimIndent()
     )
