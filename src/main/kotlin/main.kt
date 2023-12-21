@@ -1,17 +1,12 @@
 import java.io.File
 
+const val ANSWERS_TO_STUDY = 3
+const val NUMBER_POSSIBLE_ANSWERS = 4
+
 fun main() {
     val wordsFile = File("words.txt")
     wordsFile.createNewFile()
-
-    wordsFile.writeText(
-        """
-        hello|привет|0
-        dog|собака|3
-        cat|кошка|1
-        thank you|спасибо|1
-    """.trimIndent()
-    )
+    createDictionaryFile(wordsFile)
 
     val dictionary = mutableListOf<Word>()
     val listOfLines = wordsFile.readLines()
@@ -52,19 +47,35 @@ fun showMenu(dictionary: MutableList<Word>) {
 
 fun learningWords(dictionary: MutableList<Word>) {
     while (true) {
-        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < 3 }
+        if (dictionary.size < NUMBER_POSSIBLE_ANSWERS) {
+            println("В вашем словаре слишком мало слов, добавьте хотя бы $NUMBER_POSSIBLE_ANSWERS!")
+            return
+        }
+
+        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < ANSWERS_TO_STUDY }.toMutableList()
         if (listOfUnlearnedWords.isEmpty()) {
             println("Слов для изучения больше нет, вы всё выучили!")
             return
         }
 
-        val shuffledListWords = listOfUnlearnedWords.shuffled().take(4)
-        val learnWord = shuffledListWords.random()
+        if (listOfUnlearnedWords.size < NUMBER_POSSIBLE_ANSWERS) {
+            val listOfLearnedWords = dictionary.filter { it.correctAnswersCount >= ANSWERS_TO_STUDY }.shuffled()
+            for (i in 1..NUMBER_POSSIBLE_ANSWERS - listOfUnlearnedWords.size) {
+                listOfUnlearnedWords.add(listOfLearnedWords[i - 1])
+            }
+        }
 
-        println("Слово для изучения: ${learnWord.original}\nВведите правильный перевод (цифрой) или 0 для выхода в меню:")
+        val shuffledListWords = listOfUnlearnedWords.shuffled().take(NUMBER_POSSIBLE_ANSWERS)
+        var learnWord: Word
+        do {
+            learnWord = shuffledListWords.random()
+        } while (learnWord.correctAnswersCount >= ANSWERS_TO_STUDY)
+
+        println("Слово для изучения: ${learnWord.original}")
         for (i in shuffledListWords.indices) {
             println("${i + 1} - ${shuffledListWords[i].translation}")
         }
+        println("0 - Выйти в меню")
 
         val userAnswer = readln().toInt()
         if (userAnswer == 0) {
@@ -78,10 +89,27 @@ fun learningWords(dictionary: MutableList<Word>) {
 }
 
 fun showStatistics(dictionary: MutableList<Word>) {
-    val wordsLearned = dictionary.filter { it.correctAnswersCount >= 3 }.size
+    val wordsLearned = dictionary.filter { it.correctAnswersCount >= ANSWERS_TO_STUDY }.size
     val wordsTotal = dictionary.size
     val percentageRatio = (wordsLearned.toDouble() / wordsTotal * 100).toInt()
     println("Выучено $wordsLearned из $wordsTotal слов | $percentageRatio%")
+}
+
+fun createDictionaryFile(wordsFile: File) {
+    wordsFile.writeText(
+        """
+        hello|привет|3
+        dog|собака|3
+        cat|кошка|3
+        thank you|спасибо|3
+        text|текст|3
+        news|новость|3
+        word|слово|3
+        letter|письмо|3
+        message|сообщение|3
+        note|заметка|0
+    """.trimIndent()
+    )
 }
 
 
@@ -90,17 +118,3 @@ data class Word(
     val translation: String,
     val correctAnswersCount: Int = 0,
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
