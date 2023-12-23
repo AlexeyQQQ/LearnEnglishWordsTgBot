@@ -5,7 +5,6 @@ const val NUMBER_POSSIBLE_ANSWERS = 4
 
 fun main() {
     val wordsFile = File("words.txt")
-    wordsFile.createNewFile()
 
     val dictionary = mutableListOf<Word>()
     val listOfLines = wordsFile.readLines()
