@@ -6,7 +6,6 @@ const val NUMBER_POSSIBLE_ANSWERS = 4
 fun main() {
     val wordsFile = File("words.txt")
     wordsFile.createNewFile()
-    createDictionaryFile(wordsFile)
 
     val dictionary = mutableListOf<Word>()
     val listOfLines = wordsFile.readLines()
@@ -96,23 +95,6 @@ fun showStatistics(dictionary: List<Word>) {
     val wordsTotal = dictionary.size
     val percentageRatio = (wordsLearned.toDouble() / wordsTotal * 100).toInt()
     println("Выучено $wordsLearned из $wordsTotal слов | $percentageRatio%")
-}
-
-fun createDictionaryFile(wordsFile: File) {
-    wordsFile.writeText(
-        """
-        hello|привет|3
-        dog|собака|3
-        cat|кошка|3
-        thank you|спасибо|3
-        text|текст|3
-        news|новость|3
-        word|слово|3
-        letter|письмо|0
-        message|сообщение|0
-        note|заметка|0
-    """.trimIndent()
-    )
 }
 
 fun saveDictionary(dictionary: List<Word>, wordsFile: File) {
