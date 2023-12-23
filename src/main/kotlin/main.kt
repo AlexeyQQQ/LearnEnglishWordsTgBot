@@ -5,8 +5,6 @@ const val NUMBER_POSSIBLE_ANSWERS = 4
 
 fun main() {
     val wordsFile = File("words.txt")
-    wordsFile.createNewFile()
-    createDictionaryFile(wordsFile)
 
     val dictionary = mutableListOf<Word>()
     val listOfLines = wordsFile.readLines()
@@ -22,10 +20,10 @@ fun main() {
         )
     }
 
-    showMenu(dictionary)
+    showMenu(dictionary, wordsFile)
 }
 
-fun showMenu(dictionary: List<Word>) {
+fun showMenu(dictionary: List<Word>, wordsFile: File) {
     while (true) {
         println(
             """
@@ -37,7 +35,7 @@ fun showMenu(dictionary: List<Word>) {
         """.trimIndent()
         )
         when (readln()) {
-            "1" -> learningWords(dictionary)
+            "1" -> learningWords(dictionary, wordsFile)
             "2" -> showStatistics(dictionary)
             "0" -> return
             else -> println("Такого варианта не существует!")
@@ -45,7 +43,7 @@ fun showMenu(dictionary: List<Word>) {
     }
 }
 
-fun learningWords(dictionary: List<Word>) {
+fun learningWords(dictionary: List<Word>, wordsFile: File) {
     while (true) {
         if (dictionary.size < NUMBER_POSSIBLE_ANSWERS) {
             println("В вашем словаре слишком мало слов, добавьте хотя бы $NUMBER_POSSIBLE_ANSWERS!")
@@ -83,6 +81,8 @@ fun learningWords(dictionary: List<Word>) {
             return
         } else if (userAnswer - 1 == shuffledListWords.indexOf(learnWord)) {
             println("Правильно!")
+            learnWord.correctAnswersCount += 1
+            saveDictionary(dictionary, wordsFile)
         } else {
             println("Вы ошиблись!")
         }
@@ -96,26 +96,16 @@ fun showStatistics(dictionary: List<Word>) {
     println("Выучено $wordsLearned из $wordsTotal слов | $percentageRatio%")
 }
 
-fun createDictionaryFile(wordsFile: File) {
-    wordsFile.writeText(
-        """
-        hello|привет|3
-        dog|собака|3
-        cat|кошка|3
-        thank you|спасибо|3
-        text|текст|3
-        news|новость|3
-        word|слово|3
-        letter|письмо|0
-        message|сообщение|0
-        note|заметка|0
-    """.trimIndent()
-    )
+fun saveDictionary(dictionary: List<Word>, wordsFile: File) {
+    wordsFile.writeText("")
+    dictionary.forEach {
+        wordsFile.appendText("${it.original}|${it.translation}|${it.correctAnswersCount}\n")
+    }
 }
 
 
 data class Word(
     val original: String,
     val translation: String,
-    val correctAnswersCount: Int = 0,
+    var correctAnswersCount: Int = 0,
 )
