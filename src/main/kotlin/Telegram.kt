@@ -11,34 +11,32 @@ fun main(args: Array<String>) {
     while (true) {
         Thread.sleep(2000)
         val updates = tgBotService.getUpdates(updateId)
-        val lastUpdateId = getId(updateIdRegex, updates)
+        val lastUpdateId = parseString(updateIdRegex, updates)?.toInt()
 
         println(updates)
         println("updateId: $updateId")
 
-        if (lastUpdateId == -1) {
+        if (lastUpdateId == null) {
             continue
         } else {
             updateId = lastUpdateId + 1
-            val text = getMessageText(messageTextRegex, updates)
-            val chatId = getId(chatIdRegex, updates)
+            val text = parseString(messageTextRegex, updates)
+            val chatId = parseString(chatIdRegex, updates)?.toInt()
 
             println("text: $text")
             println("chatId: $chatId")
 
-            tgBotService.sendMessage(chatId, text)
+            if (text == null || chatId == null) {
+                continue
+            } else {
+                tgBotService.sendMessage(chatId, text)
+            }
         }
     }
 }
 
-fun getId(regex: Regex, updates: String): Int {
+fun parseString(regex: Regex, updates: String): String? {
     val matchResult = regex.find(updates)
     val groups = matchResult?.groups
-    return groups?.get(1)?.value?.toInt() ?: -1
-}
-
-fun getMessageText(regex: Regex, updates: String): String {
-    val matchResult = regex.find(updates)
-    val groups = matchResult?.groups
-    return groups?.get(1)?.value ?: ""
+    return groups?.get(1)?.value
 }
