@@ -1,31 +1,49 @@
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-
 fun main(args: Array<String>) {
 
     val botToken = args[0]
+    val tgBotService = TelegramBotService(botToken)
     var updateId = 0
 
     while (true) {
-        Thread.sleep(3000)
-        val updates = getUpdates(botToken, updateId)
-        println(updates)
+        Thread.sleep(2000)
+        val updates = tgBotService.getUpdates(updateId)
+        val lastUpdateId = getUpdateId(updates)
 
-        val startUpdateId = updates.lastIndexOf("\"update_id\"")
-        val endUpdateId = updates.lastIndexOf(",\n\"message\"")
-        if (startUpdateId == -1 || endUpdateId == -1) continue
-        val lastUpdateId = updates.substring(startUpdateId + 12, endUpdateId)
-        updateId = lastUpdateId.toInt() + 1
-        println(updateId)
+        println(updates)
+        println("updateId: $updateId")
+
+        if (lastUpdateId == -1) {
+            continue
+        } else {
+            updateId = lastUpdateId + 1
+            val text = getMessageText(updates)
+            val chatId = getChatId(updates)
+
+            println("text: $text")
+            println("chatId: $chatId")
+
+            tgBotService.sendMessage(chatId, text)
+        }
     }
 }
 
-fun getUpdates(botToken: String, updateId: Int): String {
-    val urlGetUpdates = "https://api.telegram.org/bot$botToken/getUpdates?offset=$updateId"
-    val client = HttpClient.newBuilder().build()
-    val request = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
-    val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-    return response.body()
+fun getUpdateId(updates: String): Int {
+    val updateIdRegex = "\"update_id\":([0-9]+),".toRegex()
+    val matchResult = updateIdRegex.find(updates)
+    val groups = matchResult?.groups
+    return groups?.get(1)?.value?.toInt() ?: -1
+}
+
+fun getChatId(updates: String): Int {
+    val chatIdRegex = "\"chat\":\\{\"id\":([0-9]+),".toRegex()
+    val matchResult = chatIdRegex.find(updates)
+    val groups = matchResult?.groups
+    return groups?.get(1)?.value?.toInt() ?: -1
+}
+
+fun getMessageText(updates: String): String {
+    val messageTextRegex = "\"text\":\"(.+?)\"".toRegex()
+    val matchResult = messageTextRegex.find(updates)
+    val groups = matchResult?.groups
+    return groups?.get(1)?.value ?: ""
 }
