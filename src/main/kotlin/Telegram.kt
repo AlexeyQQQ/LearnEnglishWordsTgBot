@@ -4,10 +4,14 @@ fun main(args: Array<String>) {
     val tgBotService = TelegramBotService(botToken)
     var updateId = 0
 
+    val updateIdRegex = "\"update_id\":([0-9]+),".toRegex()
+    val chatIdRegex = "\"chat\":\\{\"id\":([0-9]+),".toRegex()
+    val messageTextRegex = "\"text\":\"(.+?)\"".toRegex()
+
     while (true) {
         Thread.sleep(2000)
         val updates = tgBotService.getUpdates(updateId)
-        val lastUpdateId = getUpdateId(updates)
+        val lastUpdateId = getId(updateIdRegex, updates)
 
         println(updates)
         println("updateId: $updateId")
@@ -16,8 +20,8 @@ fun main(args: Array<String>) {
             continue
         } else {
             updateId = lastUpdateId + 1
-            val text = getMessageText(updates)
-            val chatId = getChatId(updates)
+            val text = getMessageText(messageTextRegex, updates)
+            val chatId = getId(chatIdRegex, updates)
 
             println("text: $text")
             println("chatId: $chatId")
@@ -27,23 +31,14 @@ fun main(args: Array<String>) {
     }
 }
 
-fun getUpdateId(updates: String): Int {
-    val updateIdRegex = "\"update_id\":([0-9]+),".toRegex()
-    val matchResult = updateIdRegex.find(updates)
+fun getId(regex: Regex, updates: String): Int {
+    val matchResult = regex.find(updates)
     val groups = matchResult?.groups
     return groups?.get(1)?.value?.toInt() ?: -1
 }
 
-fun getChatId(updates: String): Int {
-    val chatIdRegex = "\"chat\":\\{\"id\":([0-9]+),".toRegex()
-    val matchResult = chatIdRegex.find(updates)
-    val groups = matchResult?.groups
-    return groups?.get(1)?.value?.toInt() ?: -1
-}
-
-fun getMessageText(updates: String): String {
-    val messageTextRegex = "\"text\":\"(.+?)\"".toRegex()
-    val matchResult = messageTextRegex.find(updates)
+fun getMessageText(regex: Regex, updates: String): String {
+    val matchResult = regex.find(updates)
     val groups = matchResult?.groups
     return groups?.get(1)?.value ?: ""
 }
