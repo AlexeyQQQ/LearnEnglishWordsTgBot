@@ -22,7 +22,7 @@ class LearnWordsTrainer(
     private val answerToStudy: Int = 3,
     private val countOfQuestionWords: Int = 4,
 ) {
-    private var question: Question? = null
+    var question: Question? = null
     private val dictionary = loadDictionary()
 
     fun getNextQuestion(): Question? {
