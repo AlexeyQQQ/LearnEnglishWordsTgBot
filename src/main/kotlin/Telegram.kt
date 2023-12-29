@@ -1,31 +1,42 @@
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-
 fun main(args: Array<String>) {
 
     val botToken = args[0]
+    val tgBotService = TelegramBotService(botToken)
     var updateId = 0
 
-    while (true) {
-        Thread.sleep(3000)
-        val updates = getUpdates(botToken, updateId)
-        println(updates)
+    val updateIdRegex = "\"update_id\":([0-9]+),".toRegex()
+    val chatIdRegex = "\"chat\":\\{\"id\":([0-9]+),".toRegex()
+    val messageTextRegex = "\"text\":\"(.+?)\"".toRegex()
 
-        val startUpdateId = updates.lastIndexOf("\"update_id\"")
-        val endUpdateId = updates.lastIndexOf(",\n\"message\"")
-        if (startUpdateId == -1 || endUpdateId == -1) continue
-        val lastUpdateId = updates.substring(startUpdateId + 12, endUpdateId)
-        updateId = lastUpdateId.toInt() + 1
-        println(updateId)
+    while (true) {
+        Thread.sleep(2000)
+        val updates = tgBotService.getUpdates(updateId)
+        val lastUpdateId = parseString(updateIdRegex, updates)?.toInt()
+
+        println(updates)
+        println("updateId: $updateId")
+
+        if (lastUpdateId == null) {
+            continue
+        } else {
+            updateId = lastUpdateId + 1
+            val text = parseString(messageTextRegex, updates)
+            val chatId = parseString(chatIdRegex, updates)?.toInt()
+
+            println("text: $text")
+            println("chatId: $chatId")
+
+            if (text == null || chatId == null) {
+                continue
+            } else {
+                tgBotService.sendMessage(chatId, text)
+            }
+        }
     }
 }
 
-fun getUpdates(botToken: String, updateId: Int): String {
-    val urlGetUpdates = "https://api.telegram.org/bot$botToken/getUpdates?offset=$updateId"
-    val client = HttpClient.newBuilder().build()
-    val request = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
-    val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-    return response.body()
+fun parseString(regex: Regex, updates: String): String? {
+    val matchResult = regex.find(updates)
+    val groups = matchResult?.groups
+    return groups?.get(1)?.value
 }
