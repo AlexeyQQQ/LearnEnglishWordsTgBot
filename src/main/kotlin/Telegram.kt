@@ -32,21 +32,21 @@ fun main(args: Array<String>) {
         lastUpdateId?.let {
             updateId = lastUpdateId + 1
             val text = parseString(messageTextRegex, updates)
-            val chatId = parseString(chatIdRegex, updates)?.toInt()
+            val chatId = parseString(chatIdRegex, updates)?.toInt() ?: return
             val data = parseString(dataRegex, updates)
 
             println("text: $text")
             println("chatId: $chatId\n")
 
-            if (text?.lowercase() == START_BOT && chatId != null) {
+            if (text?.lowercase() == START_BOT) {
                 tgBotService.sendMenu(chatId)
             }
 
-            if (data?.lowercase() == LEARN_WORDS_MENU && chatId != null) {
+            if (data?.lowercase() == LEARN_WORDS_MENU) {
                 checkNextQuestionAndSend(tgBotService, trainer, chatId)
             }
 
-            if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true && chatId != null) {
+            if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
                 val userAnswer = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
                 if (trainer.checkAnswer(userAnswer + 1)) {
                     tgBotService.sendMessage(chatId, "Правильно!")
@@ -60,7 +60,7 @@ fun main(args: Array<String>) {
                 checkNextQuestionAndSend(tgBotService, trainer, chatId)
             }
 
-            if (data?.lowercase() == STATISTICS_MENU && chatId != null) {
+            if (data?.lowercase() == STATISTICS_MENU) {
                 val statistics = trainer.showStatistics()
                 val statisticsString = "Выучено ${statistics.wordsLearned} из ${statistics.wordsTotal} слов " +
                         "| ${statistics.percentageRatio}%"
