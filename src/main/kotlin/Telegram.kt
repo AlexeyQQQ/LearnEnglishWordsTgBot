@@ -24,48 +24,46 @@ fun main(args: Array<String>) {
     while (true) {
         Thread.sleep(2000)
         val updates = tgBotService.getUpdates(updateId)
-        val lastUpdateId = parseString(updateIdRegex, updates)?.toInt()
-
         println(updates)
         println("updateId: $updateId")
 
-        lastUpdateId?.let {
-            updateId = lastUpdateId + 1
-            val text = parseString(messageTextRegex, updates)
-            val chatId = parseString(chatIdRegex, updates)?.toInt() ?: return
-            val data = parseString(dataRegex, updates)
+        val lastUpdateId = parseString(updateIdRegex, updates)?.toInt() ?: continue
+        updateId = lastUpdateId + 1
 
-            println("text: $text")
-            println("chatId: $chatId\n")
+        val chatId = parseString(chatIdRegex, updates)?.toInt() ?: continue
+        val text = parseString(messageTextRegex, updates)
+        val data = parseString(dataRegex, updates)
 
-            if (text?.lowercase() == START_BOT) {
-                tgBotService.sendMenu(chatId)
+        println("text: $text")
+        println("chatId: $chatId\n")
+
+        if (text?.lowercase() == START_BOT) {
+            tgBotService.sendMenu(chatId)
+        }
+
+        if (data?.lowercase() == LEARN_WORDS_MENU) {
+            checkNextQuestionAndSend(tgBotService, trainer, chatId)
+        }
+
+        if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
+            val userAnswer = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
+            if (trainer.checkAnswer(userAnswer + 1)) {
+                tgBotService.sendMessage(chatId, "Правильно!")
+            } else {
+                tgBotService.sendMessage(
+                    chatId, "Вы ошиблись! Правильный ответ:" +
+                            " ${trainer.question?.correctAnswer?.original} " +
+                            "- ${trainer.question?.correctAnswer?.translation}."
+                )
             }
+            checkNextQuestionAndSend(tgBotService, trainer, chatId)
+        }
 
-            if (data?.lowercase() == LEARN_WORDS_MENU) {
-                checkNextQuestionAndSend(tgBotService, trainer, chatId)
-            }
-
-            if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
-                val userAnswer = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
-                if (trainer.checkAnswer(userAnswer + 1)) {
-                    tgBotService.sendMessage(chatId, "Правильно!")
-                } else {
-                    tgBotService.sendMessage(
-                        chatId, "Вы ошиблись! Правильный ответ:" +
-                                " ${trainer.question?.correctAnswer?.original} " +
-                                "- ${trainer.question?.correctAnswer?.translation}."
-                    )
-                }
-                checkNextQuestionAndSend(tgBotService, trainer, chatId)
-            }
-
-            if (data?.lowercase() == STATISTICS_MENU) {
-                val statistics = trainer.showStatistics()
-                val statisticsString = "Выучено ${statistics.wordsLearned} из ${statistics.wordsTotal} слов " +
-                        "| ${statistics.percentageRatio}%"
-                tgBotService.sendMessage(chatId, statisticsString)
-            }
+        if (data?.lowercase() == STATISTICS_MENU) {
+            val statistics = trainer.showStatistics()
+            val statisticsString = "Выучено ${statistics.wordsLearned} из ${statistics.wordsTotal} слов " +
+                    "| ${statistics.percentageRatio}%"
+            tgBotService.sendMessage(chatId, statisticsString)
         }
     }
 }
