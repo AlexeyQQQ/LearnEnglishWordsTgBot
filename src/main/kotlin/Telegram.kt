@@ -1,3 +1,8 @@
+const val START_BOT = "/start"
+const val LEARN_WORDS_MENU = "learn_words_menu"
+const val STATISTICS_MENU = "statistics_menu"
+const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
+
 fun main(args: Array<String>) {
 
     val botToken = args[0]
@@ -7,32 +12,67 @@ fun main(args: Array<String>) {
     val updateIdRegex = "\"update_id\":([0-9]+),".toRegex()
     val chatIdRegex = "\"chat\":\\{\"id\":([0-9]+),".toRegex()
     val messageTextRegex = "\"text\":\"(.+?)\"".toRegex()
+    val dataRegex = "\"data\":\"(.+?)\"".toRegex()
+
+    val trainer = try {
+        LearnWordsTrainer()
+    } catch (e: Exception) {
+        println("Ошибка при загрузке словаря")
+        return
+    }
 
     while (true) {
         Thread.sleep(2000)
         val updates = tgBotService.getUpdates(updateId)
-        val lastUpdateId = parseString(updateIdRegex, updates)?.toInt()
-
         println(updates)
         println("updateId: $updateId")
 
-        if (lastUpdateId == null) {
-            continue
-        } else {
-            updateId = lastUpdateId + 1
-            val text = parseString(messageTextRegex, updates)
-            val chatId = parseString(chatIdRegex, updates)?.toInt()
+        val lastUpdateId = parseString(updateIdRegex, updates)?.toInt() ?: continue
+        updateId = lastUpdateId + 1
 
-            println("text: $text")
-            println("chatId: $chatId")
+        val chatId = parseString(chatIdRegex, updates)?.toInt() ?: continue
+        val text = parseString(messageTextRegex, updates)
+        val data = parseString(dataRegex, updates)
 
-            if (text == null || chatId == null) {
-                continue
+        println("text: $text")
+        println("chatId: $chatId\n")
+
+        if (text?.lowercase() == START_BOT) {
+            tgBotService.sendMenu(chatId)
+        }
+
+        if (data?.lowercase() == LEARN_WORDS_MENU) {
+            checkNextQuestionAndSend(tgBotService, trainer, chatId)
+        }
+
+        if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
+            val userAnswer = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
+            if (trainer.checkAnswer(userAnswer + 1)) {
+                tgBotService.sendMessage(chatId, "Правильно!")
             } else {
-                tgBotService.sendMessage(chatId, text)
+                tgBotService.sendMessage(
+                    chatId, "Вы ошиблись! Правильный ответ:" +
+                            " ${trainer.question?.correctAnswer?.original} " +
+                            "- ${trainer.question?.correctAnswer?.translation}."
+                )
             }
+            checkNextQuestionAndSend(tgBotService, trainer, chatId)
+        }
+
+        if (data?.lowercase() == STATISTICS_MENU) {
+            val statistics = trainer.showStatistics()
+            val statisticsString = "Выучено ${statistics.wordsLearned} из ${statistics.wordsTotal} слов " +
+                    "| ${statistics.percentageRatio}%"
+            tgBotService.sendMessage(chatId, statisticsString)
         }
     }
+}
+
+fun checkNextQuestionAndSend(tgBotService: TelegramBotService, trainer: LearnWordsTrainer, chatId: Int) {
+    val question = trainer.getNextQuestion()
+    question?.let {
+        tgBotService.sendQuestion(chatId, question)
+    } ?: tgBotService.sendMessage(chatId, "Слов для изучения нет, вы всё выучили!")
 }
 
 fun parseString(regex: Regex, updates: String): String? {
